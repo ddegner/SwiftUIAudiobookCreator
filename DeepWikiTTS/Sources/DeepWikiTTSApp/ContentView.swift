@@ -48,6 +48,7 @@ struct ContentView: View {
     @State private var voiceConfig = TTSVoiceConfig()
     @State private var outputDirectory: URL = FileManager.default.urls(for: .musicDirectory, in: .userDomainMask).first!.appendingPathComponent("DeepWikiTTS")
     @State private var resumeIndex: Int = 0
+    @State private var lastGeneratedURL: URL?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -67,7 +68,7 @@ struct ContentView: View {
                 Text("\(model.bookTitle) — \(model.bookAuthor)")
             }
 
-            List(model.chapters.prefix(20), id: \.title) { ch in
+            List(model.chapters.prefix(50), id: \.title, selection: $resumeIndex) { ch in
                 VStack(alignment: .leading) {
                     Text(ch.title).font(.headline)
                     Text(ch.text.prefix(200))
@@ -98,12 +99,27 @@ struct ContentView: View {
                         try? FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
                         let meta = BookMetadata(title: model.bookTitle, author: model.bookAuthor)
                         tts.generate(chapters: model.chapters, voice: voiceConfig, outDir: outputDirectory, metadata: meta, startIndex: resumeIndex) { finalURL in
-                            // Optionally surface last file for Books hand-off
+                            lastGeneratedURL = finalURL
                         }
                     }
                 }
                 .keyboardShortcut(.defaultAction)
                 if tts.isRunning { ProgressView(value: tts.progress) }
+                Button("Generate Selected Chapter Only") {
+                    guard resumeIndex < model.chapters.count else { return }
+                    let ch = model.chapters[resumeIndex]
+                    let meta = BookMetadata(title: model.bookTitle, author: model.bookAuthor)
+                    try? FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
+                    tts.generate(chapters: [ch], voice: voiceConfig, outDir: outputDirectory, metadata: meta, startIndex: 0) { finalURL in
+                        lastGeneratedURL = finalURL
+                    }
+                }
+            }
+
+            if let url = lastGeneratedURL {
+                Divider()
+                PlaybackView(fileURL: url)
+                BooksButton(fileURL: url)
             }
         }
         .padding(16)
@@ -115,6 +131,15 @@ enum FilePicker {
     static func pickEPUB() -> URL? {
         let panel = NSOpenPanel()
         panel.allowedFileTypes = ["epub"]
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        let response = panel.runModal()
+        return response == .OK ? panel.url : nil
+    }
+
+    static func pickRules() -> URL? {
+        let panel = NSOpenPanel()
+        panel.allowedFileTypes = ["json"]
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
         let response = panel.runModal()

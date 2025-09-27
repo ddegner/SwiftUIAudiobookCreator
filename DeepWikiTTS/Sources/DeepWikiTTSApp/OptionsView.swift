@@ -3,6 +3,7 @@ import DeepWikiTTS
 
 struct OptionsView: View {
     @Binding var config: EpubParsingConfig
+    @State private var rulesPath: String = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -17,6 +18,18 @@ struct OptionsView: View {
                 Text("None").tag(2)
             }
             Toggle("Footnote Cleanup", isOn: bindingFootnotes)
+            HStack {
+                Button("Choose Rules JSON…") {
+                    if let url = FilePicker.pickRules() {
+                        rulesPath = url.path
+                        config = EpubParsingConfig(titleMode: config.titleMode, newlineMode: config.newlineMode, breakString: config.breakString, applyFootnoteCleanup: config.applyFootnoteCleanup, searchReplaceRulesURL: url)
+                    }
+                }
+                Text(rulesPath.isEmpty ? "No rules selected" : rulesPath)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+            }
         }
     }
 
