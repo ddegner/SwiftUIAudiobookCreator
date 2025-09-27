@@ -7,7 +7,8 @@ let package = Package(
         .macOS(.v10_15)
     ],
     products: [
-        .library(name: "DeepWikiTTS", targets: ["DeepWikiTTS"])
+        .library(name: "DeepWikiTTS", targets: ["DeepWikiTTS"]),
+        .executable(name: "DeepWikiTTSApp", targets: ["DeepWikiTTSApp"])
     ],
     dependencies: [
         .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.6.0"),
@@ -21,6 +22,12 @@ let package = Package(
                 .product(name: "ZIPFoundation", package: "ZIPFoundation")
             ],
             path: "Sources/DeepWikiTTS"
+        ),
+        .executableTarget(
+            name: "DeepWikiTTSApp",
+            dependencies: ["DeepWikiTTS"],
+            path: "Sources/DeepWikiTTSApp",
+            resources: [ .process("Resources") ]
         ),
         .testTarget(
             name: "DeepWikiTTSTests",
