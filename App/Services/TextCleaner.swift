@@ -1,10 +1,18 @@
 import Foundation
 import NaturalLanguage
+import SwiftSoup
 
 final class TextCleaner: TextProcessing {
   func cleanHTML(_ url: URL) -> String {
-    // Stub: replace with SwiftSoup cleaning
-    (try? String(contentsOf: url)) ?? ""
+    guard let html = try? String(contentsOf: url) else { return "" }
+    do {
+      let doc: Document = try SwiftSoup.parse(html)
+      try doc.select("script,style,nav,footer,figure,aside").remove()
+      let bodyText = try doc.body()?.text() ?? ""
+      return normalize(bodyText)
+    } catch {
+      return normalize(html)
+    }
   }
 
   func sentenceChunks(from text: String, targetChars: Int) -> [String] {
@@ -24,5 +32,15 @@ final class TextCleaner: TextProcessing {
     }
     if !current.isEmpty { chunks.append(current) }
     return chunks
+  }
+
+  private func normalize(_ text: String) -> String {
+    var s = text
+    s = s.replacingOccurrences(of: "-\n", with: "")
+    s = s.replacingOccurrences(of: "\r", with: "\n")
+    s = s.replacingOccurrences(of: "\n\n+", with: "\n\n", options: .regularExpression)
+    s = s.replacingOccurrences(of: "\n", with: " ")
+    s = s.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+    return s.trimmingCharacters(in: .whitespacesAndNewlines)
   }
 }
