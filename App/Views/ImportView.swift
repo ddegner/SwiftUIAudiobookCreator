@@ -64,6 +64,4 @@ struct ImportView: View {
   }
 }
 
-extension UTType {
-  static var epub: UTType { UTType(importedAs: "org.idpf.epub-container") }
-}
+// shared UTType.epub now lives in Utilities

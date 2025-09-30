@@ -58,9 +58,15 @@ final class TTSWriter: ChapterSynthesizing {
     }
 
     // Export PCM to M4A
-    try await exportCAFToM4A(cafURL: tmpPCM, m4aURL: outURL)
-    let duration = Double(totalFrames) / targetSampleRate
-    return duration
+    do {
+      try await exportCAFToM4A(cafURL: tmpPCM, m4aURL: outURL)
+      let duration = Double(totalFrames) / targetSampleRate
+      try? FileManager.default.removeItem(at: tmpPCM)
+      return duration
+    } catch {
+      try? FileManager.default.removeItem(at: tmpPCM)
+      throw error
+    }
   }
 }
 

@@ -42,6 +42,14 @@ final class EpubParser: EPUBParsing {
       if !id.isEmpty { manifest[id] = ManifestItem(id: id, href: href, mediaType: mediaType, properties: properties) }
     }
 
+    var coverImage: NSImage? = nil
+    // cover via <meta name="cover" content="id">
+    if let coverId = metadata["meta"].all.first(where: { $0.element?.attribute(by: "name")?.text == "cover" })?.element?.attribute(by: "content")?.text,
+       let coverItem = manifest[coverId] {
+      let coverURL = opfDir.appendingPathComponent(coverItem.href)
+      if let data = try? Data(contentsOf: coverURL), let img = NSImage(data: data) { coverImage = img }
+    }
+
     var chapters: [Chapter] = []
     var titleMap: [String: String] = [:]
 
@@ -86,7 +94,7 @@ final class EpubParser: EPUBParsing {
       chapters.append(Chapter(index: idx, title: titleGuess ?? "Chapter \(idx+1)", htmlURL: resolved))
     }
 
-    return Book(title: title, author: author, cover: nil, chapters: chapters)
+    return Book(title: title, author: author, cover: coverImage, chapters: chapters)
   }
 
   private func unzip(epubURL: URL, to destination: URL) throws {

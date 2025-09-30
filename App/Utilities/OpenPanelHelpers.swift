@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import UniformTypeIdentifiers
 
 enum OpenPanelHelpers {
   static func selectEPUB(completion: @escaping (URL?) -> Void) {

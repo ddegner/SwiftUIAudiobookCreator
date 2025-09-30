@@ -24,7 +24,7 @@ final class MetadataWriter {
     items.append(titleItem)
 
     let albumItem = AVMutableMetadataItem()
-    albumItem.identifier = .id3MetadataAlbumTitle
+    albumItem.identifier = .commonIdentifierAlbumName
     albumItem.value = bookTitle as NSString
     items.append(albumItem)
 
@@ -33,9 +33,10 @@ final class MetadataWriter {
     artistItem.value = author as NSString
     items.append(artistItem)
 
+    // Track number in iTunes format
     let trackItem = AVMutableMetadataItem()
-    trackItem.identifier = .id3MetadataTrackNumber
-    trackItem.value = "\(trackNumber)" as NSString
+    trackItem.identifier = .iTunesMetadataTrackNumber
+    trackItem.value = "\(trackNumber)/0" as NSString
     items.append(trackItem)
 
     if let artworkData {

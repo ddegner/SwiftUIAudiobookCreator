@@ -11,6 +11,7 @@ final class AppState: ObservableObject {
 
   @Published var isConverting: Bool = false
   @Published var overallProgress: Double = 0
+  @Published var conversionTask: Task<Void, Never>?
 
   let engine = ConversionEngine()
 }

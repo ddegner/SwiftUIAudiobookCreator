@@ -48,7 +48,17 @@ struct BookOverviewView: View {
             .foregroundColor(.secondary)
         }
         Spacer()
-        Button("Next") { showingSettings = true }
+        Button("Next") {
+          if var book = appState.book {
+            for idx in book.chapters.indices {
+              if let newTitle = editedTitles[book.chapters[idx].id], !newTitle.isEmpty {
+                book.chapters[idx].title = newTitle
+              }
+            }
+            appState.book = book
+          }
+          showingSettings = true
+        }
           .disabled(appState.destinationURL == nil)
       }
     }

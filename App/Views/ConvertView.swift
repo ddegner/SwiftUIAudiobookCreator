@@ -14,11 +14,15 @@ struct ConvertView: View {
           Text(String(format: "%03d", chapter.index + 1)).monospacedDigit()
           Text(chapter.title)
           Spacer()
-          if let d = chapter.duration { Text(format(duration: d)).foregroundColor(.secondary) }
+          if let d = chapter.duration {
+            Text(format(duration: d)).foregroundColor(.secondary)
+          } else {
+            if appState.isConverting { Text("Processing…").foregroundColor(.secondary) }
+          }
         }
       }
       HStack {
-        Button("Cancel") { /* hook up Task cancellation */ }
+        Button("Cancel") { appState.conversionTask?.cancel() }
         Spacer()
         Button("Reveal Output") { revealOutput() }.disabled(!isDone)
       }
@@ -36,24 +40,22 @@ struct ConvertView: View {
   private func startConversion() async {
     guard let epub = appState.selectedEPUBURL, let dest = appState.destinationURL else { return }
     appState.isConverting = true
-    do {
-      let book = try await appState.engine.convert(
-        epubURL: epub,
-        settings: appState.settings,
-        destination: dest
-      ) { chapterIndex, progress, message in
-        Task { @MainActor in
-          appState.overallProgress = progress
-          if !message.isEmpty { log.append(message) }
+    appState.conversionTask = Task { @MainActor in
+      do {
+        let book = try await appState.engine.convert(
+          epubURL: epub,
+          settings: appState.settings,
+          destination: dest
+        ) { chapterIndex, progress, message in
+          Task { @MainActor in
+            appState.overallProgress = progress
+            if !message.isEmpty { log.append(message) }
+          }
         }
-      }
-      await MainActor.run {
         appState.book = book
         isDone = true
         appState.isConverting = false
-      }
-    } catch {
-      await MainActor.run {
+      } catch {
         log.append("Error: \(error.localizedDescription)")
         appState.isConverting = false
       }
@@ -61,8 +63,12 @@ struct ConvertView: View {
   }
 
   private func revealOutput() {
-    guard let dest = appState.destinationURL else { return }
-    NSWorkspace.shared.activateFileViewerSelecting([dest])
+    guard let book = appState.book, let dest = appState.destinationURL else { return }
+    let folderName = "\(book.title) (\(book.author))"
+      .replacingOccurrences(of: "[/\\:?*\"<>|]", with: " ", options: .regularExpression)
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+    let outDir = dest.appendingPathComponent(folderName, isDirectory: true)
+    NSWorkspace.shared.activateFileViewerSelecting([outDir])
   }
 
   private func format(duration: TimeInterval) -> String {

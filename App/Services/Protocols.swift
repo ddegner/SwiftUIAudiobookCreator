@@ -41,6 +41,7 @@ actor ConversionEngine {
     let outDir = destination.appendingPathComponent(folderName, isDirectory: true)
     try FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true)
 
+    var manifest: [[String: Any]] = []
     for i in 0..<(book.chapters.count) {
       try Task.checkCancellation()
       var chapter = book.chapters[i]
@@ -77,7 +78,22 @@ actor ConversionEngine {
 
       let overall = Double(i + 1) / Double(max(book.chapters.count, 1))
       progress(i, overall, "Finished: \(chapter.title)")
+
+      manifest.append([
+        "index": chapter.index,
+        "title": chapter.title,
+        "path": outURL.path,
+        "duration": chapter.duration ?? 0
+      ])
     }
+    // Write manifest.json
+    let manifestURL = outDir.appendingPathComponent("manifest.json")
+    let top: [String: Any] = [
+      "book": ["title": book.title, "author": book.author],
+      "chapters": manifest
+    ]
+    let data = try JSONSerialization.data(withJSONObject: top, options: [.prettyPrinted])
+    try data.write(to: manifestURL)
     return book
   }
 }
