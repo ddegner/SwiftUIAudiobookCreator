@@ -1,0 +1,69 @@
+{
+  "originHash" : "e71922e9ab8043369093895490bc7ebbf80e5c75de84b37acb3ee99b9317f16a",
+  "pins" : [
+    {
+      "identity" : "aexml",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/tadija/AEXML",
+      "state" : {
+        "revision" : "db806756c989760b35108146381535aec231092b",
+        "version" : "4.7.0"
+      }
+    },
+    {
+      "identity" : "epubkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/witekbobrowski/EPUBKit.git",
+      "state" : {
+        "revision" : "c8148577adc407ab1d4fcd45ceb58b54fb96b344",
+        "version" : "0.4.0"
+      }
+    },
+    {
+      "identity" : "kokoro-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/mlalma/kokoro-ios.git",
+      "state" : {
+        "revision" : "7f6c9c216d0ad63c994799df0193b98c4580bc74",
+        "version" : "1.0.0"
+      }
+    },
+    {
+      "identity" : "misakiswift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/mlalma/MisakiSwift",
+      "state" : {
+        "revision" : "cddad14f2a457d8ee4a2a7ae940851a7ce4aa4ca",
+        "version" : "1.0.1"
+      }
+    },
+    {
+      "identity" : "mlx-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ml-explore/mlx-swift",
+      "state" : {
+        "revision" : "96c0f69cf15f38abd6248bb71fca908171dab1d8",
+        "version" : "0.25.6"
+      }
+    },
+    {
+      "identity" : "swift-numerics",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-numerics",
+      "state" : {
+        "revision" : "0c0290ff6b24942dadb83a929ffaaa1481df04a2",
+        "version" : "1.1.1"
+      }
+    },
+    {
+      "identity" : "zip",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/marmelroy/Zip",
+      "state" : {
+        "revision" : "67fa55813b9e7b3b9acee9c0ae501def28746d76",
+        "version" : "2.1.2"
+      }
+    }
+  ],
+  "version" : 3
+}

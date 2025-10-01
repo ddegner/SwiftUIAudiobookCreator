@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:SwiftUIepubToAudiobook}",
+            "name": "Debug SwiftUIepubToAudiobook",
+            "program": "${workspaceFolder:SwiftUIepubToAudiobook}/.build/debug/SwiftUIepubToAudiobook",
+            "preLaunchTask": "swift: Build Debug SwiftUIepubToAudiobook"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:SwiftUIepubToAudiobook}",
+            "name": "Release SwiftUIepubToAudiobook",
+            "program": "${workspaceFolder:SwiftUIepubToAudiobook}/.build/release/SwiftUIepubToAudiobook",
+            "preLaunchTask": "swift: Build Release SwiftUIepubToAudiobook"
+        }
+    ]
+}

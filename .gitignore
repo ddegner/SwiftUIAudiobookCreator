@@ -16,3 +16,4 @@ project.xcodeproj/
 
 # macOS
 .DS_Store
+SwiftUIepubToAudiobook/SwiftUIepubToAudiobook/Resources/Models/kokoro-v1_0.safetensors

@@ -1,0 +1,31 @@
+.DS_Store
+/.build
+/Packages
+xcuserdata/
+DerivedData/
+.swiftpm/configuration/registries.json
+.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+.netrc
+
+# Test files and sample data
+*.epub
+test.*
+
+# Audio files (output from audiobook generation)
+*.mp3
+*.wav
+*.m4a
+*.aac
+*.ogg
+
+# Log files
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+*.cache
+
+# Model files ()
+*.safetensors
+

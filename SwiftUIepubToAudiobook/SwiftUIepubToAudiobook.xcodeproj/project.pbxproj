@@ -1,0 +1,457 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		7F4ED3D22E8DA2C60071E6B3 /* EPUBKit in Frameworks */ = {isa = PBXBuildFile; productRef = A1000000000000000000010A /* EPUBKit */; };
+		7F4ED3D32E8DA2C60071E6B3 /* KokoroSwift in Frameworks */ = {isa = PBXBuildFile; productRef = A1000000000000000000011A /* KokoroSwift */; };
+		7F4ED3D42E8DA2C60071E6B3 /* Numerics in Frameworks */ = {isa = PBXBuildFile; productRef = A1000000000000000000012A /* Numerics */; };
+		7F4ED3D52E8DA2C60071E6B3 /* RealModule in Frameworks */ = {isa = PBXBuildFile; productRef = A1000000000000000000013A /* RealModule */; };
+		7F4ED3D62E8DA2C60071E6B3 /* ComplexModule in Frameworks */ = {isa = PBXBuildFile; productRef = A1000000000000000000014A /* ComplexModule */; };
+		7F4ED3D82E8DA4210071E6B3 /* KokoroBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F4ED3D72E8DA4210071E6B3 /* KokoroBridge.swift */; };
+		A1000000000000000000001A /* SwiftUIepubToAudiobookApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000001B /* SwiftUIepubToAudiobookApp.swift */; };
+		A1000000000000000000001C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000001D /* ContentView.swift */; };
+		A1000000000000000000001E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000001F /* Assets.xcassets */; };
+		A1000000000000000000002A /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000002B /* Models.swift */; };
+		A1000000000000000000002C /* EPUBService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000002D /* EPUBService.swift */; };
+		A1000000000000000000002E /* TTSEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000002F /* TTSEngine.swift */; };
+		A1000000000000000000003A /* AudioExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000003B /* AudioExport.swift */; };
+		A1000000000000000000003C /* kokoro-v1_0.safetensors in Resources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000003D /* kokoro-v1_0.safetensors */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		7F4ED3D72E8DA4210071E6B3 /* KokoroBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KokoroBridge.swift; sourceTree = "<group>"; };
+		A1000000000000000000000A /* SwiftUIepubToAudiobook.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftUIepubToAudiobook.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1000000000000000000001B /* SwiftUIepubToAudiobookApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftUIepubToAudiobookApp.swift; sourceTree = "<group>"; };
+		A1000000000000000000001D /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		A1000000000000000000001F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A1000000000000000000002B /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		A1000000000000000000002D /* EPUBService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EPUBService.swift; sourceTree = "<group>"; };
+		A1000000000000000000002F /* TTSEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSEngine.swift; sourceTree = "<group>"; };
+		A1000000000000000000003B /* AudioExport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioExport.swift; sourceTree = "<group>"; };
+		A1000000000000000000003D /* kokoro-v1_0.safetensors */ = {isa = PBXFileReference; lastKnownFileType = file; path = "kokoro-v1_0.safetensors"; sourceTree = "<group>"; };
+		A1000000000000000000004A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A1000000000000000000005A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7F4ED3D62E8DA2C60071E6B3 /* ComplexModule in Frameworks */,
+				7F4ED3D52E8DA2C60071E6B3 /* RealModule in Frameworks */,
+				7F4ED3D42E8DA2C60071E6B3 /* Numerics in Frameworks */,
+				7F4ED3D32E8DA2C60071E6B3 /* KokoroSwift in Frameworks */,
+				7F4ED3D22E8DA2C60071E6B3 /* EPUBKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A1000000000000000000006A = {
+			isa = PBXGroup;
+			children = (
+				A1000000000000000000007A /* SwiftUIepubToAudiobook */,
+				A1000000000000000000008A /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A1000000000000000000007A /* SwiftUIepubToAudiobook */ = {
+			isa = PBXGroup;
+			children = (
+				A1000000000000000000001B /* SwiftUIepubToAudiobookApp.swift */,
+				A1000000000000000000001D /* ContentView.swift */,
+				A1000000000000000000002B /* Models.swift */,
+				A1000000000000000000002D /* EPUBService.swift */,
+				A1000000000000000000002F /* TTSEngine.swift */,
+				A1000000000000000000003B /* AudioExport.swift */,
+				A1000000000000000000001F /* Assets.xcassets */,
+				A100000000000000000000AA /* Resources */,
+				A1000000000000000000004A /* Info.plist */,
+				7F4ED3D72E8DA4210071E6B3 /* KokoroBridge.swift */,
+			);
+			path = SwiftUIepubToAudiobook;
+			sourceTree = "<group>";
+		};
+		A1000000000000000000008A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A1000000000000000000000A /* SwiftUIepubToAudiobook.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A100000000000000000000AA /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				A100000000000000000000BA /* Models */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		A100000000000000000000BA /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A1000000000000000000003D /* kokoro-v1_0.safetensors */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A100000000000000000000CA /* SwiftUIepubToAudiobook */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A100000000000000000000DA /* Build configuration list for PBXNativeTarget "SwiftUIepubToAudiobook" */;
+			buildPhases = (
+				A100000000000000000000EA /* Sources */,
+				A1000000000000000000005A /* Frameworks */,
+				A100000000000000000000FA /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SwiftUIepubToAudiobook;
+			packageProductDependencies = (
+				A1000000000000000000010A /* EPUBKit */,
+				A1000000000000000000011A /* KokoroSwift */,
+				A1000000000000000000012A /* Numerics */,
+				A1000000000000000000013A /* RealModule */,
+				A1000000000000000000014A /* ComplexModule */,
+			);
+			productName = SwiftUIepubToAudiobook;
+			productReference = A1000000000000000000000A /* SwiftUIepubToAudiobook.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A1000000000000000000015A /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					A100000000000000000000CA = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = A1000000000000000000016A /* Build configuration list for PBXProject "SwiftUIepubToAudiobook" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A1000000000000000000006A;
+			packageReferences = (
+				A1000000000000000000017A /* XCRemoteSwiftPackageReference "EPUBKit" */,
+				A1000000000000000000018A /* XCRemoteSwiftPackageReference "kokoro-ios" */,
+				A1000000000000000000019A /* XCRemoteSwiftPackageReference "swift-numerics" */,
+			);
+			productRefGroup = A1000000000000000000008A /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A100000000000000000000CA /* SwiftUIepubToAudiobook */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A100000000000000000000FA /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000000000000000000003C /* kokoro-v1_0.safetensors in Resources */,
+				A1000000000000000000001E /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A100000000000000000000EA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000000000000000000001C /* ContentView.swift in Sources */,
+				A1000000000000000000002A /* Models.swift in Sources */,
+				A1000000000000000000002C /* EPUBService.swift in Sources */,
+				A1000000000000000000002E /* TTSEngine.swift in Sources */,
+				7F4ED3D82E8DA4210071E6B3 /* KokoroBridge.swift in Sources */,
+				A1000000000000000000003A /* AudioExport.swift in Sources */,
+				A1000000000000000000001A /* SwiftUIepubToAudiobookApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A100000000000000000001BA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A100000000000000000001BB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		A100000000000000000001BC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION = YES;
+				CODE_SIGN_ENTITLEMENTS = SwiftUIepubToAudiobook/SwiftUIepubToAudiobook.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_ASSET_PATHS = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SwiftUIepubToAudiobook/Info.plist;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.SwiftUIepubToAudiobook;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		A100000000000000000001BD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION = YES;
+				CODE_SIGN_ENTITLEMENTS = SwiftUIepubToAudiobook/SwiftUIepubToAudiobook.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_ASSET_PATHS = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SwiftUIepubToAudiobook/Info.plist;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.SwiftUIepubToAudiobook;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A100000000000000000000DA /* Build configuration list for PBXNativeTarget "SwiftUIepubToAudiobook" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A100000000000000000001BC /* Debug */,
+				A100000000000000000001BD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1000000000000000000016A /* Build configuration list for PBXProject "SwiftUIepubToAudiobook" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A100000000000000000001BA /* Debug */,
+				A100000000000000000001BB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A1000000000000000000017A /* XCRemoteSwiftPackageReference "EPUBKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/witekbobrowski/EPUBKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.4.0;
+			};
+		};
+		A1000000000000000000018A /* XCRemoteSwiftPackageReference "kokoro-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mlalma/kokoro-ios.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
+		A1000000000000000000019A /* XCRemoteSwiftPackageReference "swift-numerics" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-numerics.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A1000000000000000000010A /* EPUBKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1000000000000000000017A /* XCRemoteSwiftPackageReference "EPUBKit" */;
+			productName = EPUBKit;
+		};
+		A1000000000000000000011A /* KokoroSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1000000000000000000018A /* XCRemoteSwiftPackageReference "kokoro-ios" */;
+			productName = KokoroSwift;
+		};
+		A1000000000000000000012A /* Numerics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1000000000000000000019A /* XCRemoteSwiftPackageReference "swift-numerics" */;
+			productName = Numerics;
+		};
+		A1000000000000000000013A /* RealModule */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1000000000000000000019A /* XCRemoteSwiftPackageReference "swift-numerics" */;
+			productName = RealModule;
+		};
+		A1000000000000000000014A /* ComplexModule */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1000000000000000000019A /* XCRemoteSwiftPackageReference "swift-numerics" */;
+			productName = ComplexModule;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = A1000000000000000000015A /* Project object */;
+}
