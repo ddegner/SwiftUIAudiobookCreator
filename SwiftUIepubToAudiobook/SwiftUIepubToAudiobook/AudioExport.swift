@@ -1,7 +1,6 @@
 import Foundation
 import AVFoundation
 
-@MainActor
 func appendBuffersToWAV(buffers: [AVAudioPCMBuffer],
                         to wavURL: URL,
                         format: AVAudioFormat) async throws {

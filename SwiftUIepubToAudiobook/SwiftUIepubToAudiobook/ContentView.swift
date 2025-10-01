@@ -566,14 +566,14 @@ final class AppViewModel: ObservableObject {
         init(buffer: AVAudioPCMBuffer) { self.buffer = buffer }
     }
 
-    private func formatsMatch(_ a: AVAudioFormat, _ b: AVAudioFormat) -> Bool {
+    nonisolated private func formatsMatch(_ a: AVAudioFormat, _ b: AVAudioFormat) -> Bool {
         return a.sampleRate == b.sampleRate &&
                a.channelCount == b.channelCount &&
                a.commonFormat == b.commonFormat &&
                a.isInterleaved == b.isInterleaved
     }
 
-    private func convert(_ buffer: AVAudioPCMBuffer, to targetFormat: AVAudioFormat) throws -> AVAudioPCMBuffer {
+    nonisolated private func convert(_ buffer: AVAudioPCMBuffer, to targetFormat: AVAudioFormat) throws -> AVAudioPCMBuffer {
         if formatsMatch(buffer.format, targetFormat) { return buffer }
         guard let converter = AVAudioConverter(from: buffer.format, to: targetFormat) else {
             throw NSError(domain: "Audio", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to create audio converter"]) }
@@ -610,6 +610,12 @@ final class AppViewModel: ObservableObject {
         @unknown default:
             throw NSError(domain: "Audio", code: -4, userInfo: [NSLocalizedDescriptionKey: "Audio conversion returned unknown status"])
         }
+    }
+
+    nonisolated private func duration(of buffer: AVAudioPCMBuffer) -> TimeInterval {
+        let frames = Double(buffer.frameLength)
+        let rate = buffer.format.sampleRate
+        return frames / rate
     }
 
     func reset() {
@@ -662,11 +668,6 @@ final class AppViewModel: ObservableObject {
     }
 
     // Helper to calculate duration of an audio buffer
-    private func duration(of buffer: AVAudioPCMBuffer) -> TimeInterval {
-        let frames = Double(buffer.frameLength)
-        let rate = buffer.format.sampleRate
-        return frames / rate
-    }
 
     func convertToAudiobook() async {
         guard let book = self.book, let modelURL = self.modelURL else { return }
@@ -684,7 +685,7 @@ final class AppViewModel: ObservableObject {
         await synthesisTask?.value
     }
 
-    private func performConversion(book: Book, modelURL: URL) async {
+    nonisolated(nonsending) private func performConversion(book: Book, modelURL: URL) async {
         // Update UI state on main thread
         await MainActor.run {
             isSynthesizing = true
@@ -700,6 +701,8 @@ final class AppViewModel: ObservableObject {
             let tts = TTSService(modelURL: modelURL)
             tts.limitHits = 0
 
+            let selectedVoice = await MainActor.run { self.voiceSelection.kokoroVoice }
+
             var buffers: [AVAudioPCMBuffer] = []
             var mutableChapters = book.chapters  // we'll update startTime
             var cumulativeDuration: TimeInterval = 0
@@ -708,7 +711,7 @@ final class AppViewModel: ObservableObject {
 
             for (idx, chapter) in mutableChapters.enumerated() {
                 // Check for cancellation before each chapter
-                if await self.isCancelled {
+                if await MainActor.run { self.isCancelled } {
                     throw CancellationError()
                 }
 
@@ -717,7 +720,7 @@ final class AppViewModel: ObservableObject {
                     log("Synthesizing chapter \(idx + 1)/\(totalChapters) (\(chapter.htmlContent.count) characters)")
                 }
 
-                let chapterBuffers = try tts.synthesizeWithFallback(chapter.htmlContent, voice: self.voiceSelection.kokoroVoice)
+                let chapterBuffers = try tts.synthesizeWithFallback(chapter.htmlContent, voice: selectedVoice)
                 guard !chapterBuffers.isEmpty else {
                     throw NSError(domain: "TTS", code: -5, userInfo: [NSLocalizedDescriptionKey: "No audio produced for chapter \(idx+1)"])
                 }
@@ -726,19 +729,28 @@ final class AppViewModel: ObservableObject {
                     targetFormat = chapterBuffers[0].format
                 }
 
+                // Convert buffers to target format if needed (no MainActor hop to avoid sending non-Sendable buffers)
+                var convertedBuffers: [AVAudioPCMBuffer] = []
                 for var buffer in chapterBuffers {
-                    if let targetFormat = targetFormat, !formatsMatch(buffer.format, targetFormat) {
-                        buffer = try convert(buffer, to: targetFormat)
+                    if let targetFormat = targetFormat, !self.formatsMatch(buffer.format, targetFormat) {
+                        do {
+                            buffer = try self.convert(buffer, to: targetFormat)
+                        } catch {
+                            // If conversion fails, use original buffer
+                            print("Buffer conversion failed: \(error)")
+                        }
                     }
-                    buffers.append(buffer)
+                    convertedBuffers.append(buffer)
                 }
+
+                buffers.append(contentsOf: convertedBuffers)
 
                 // Calculate chapter start time
                 mutableChapters[idx].startTime = cumulativeDuration
 
                 // Accumulate duration for chapter
                 for buffer in chapterBuffers {
-                    cumulativeDuration += duration(of: buffer)
+                    cumulativeDuration += self.duration(of: buffer)
                 }
 
                 await MainActor.run {
@@ -750,9 +762,12 @@ final class AppViewModel: ObservableObject {
                 throw NSError(domain: "Audio", code: -6, userInfo: [NSLocalizedDescriptionKey: "No audio buffers synthesized"])
             }
 
+            // Capture buffer count to avoid data race
+            let bufferCount = buffers.count
+
             await MainActor.run {
                 currentStatus = "Saving audio to file..."
-                log("All chapters synthesized. Saving \(buffers.count) audio buffers...")
+                log("All chapters synthesized. Saving \(bufferCount) audio buffers...")
             }
 
             let tmp = FileManager.default.temporaryDirectory
@@ -809,7 +824,7 @@ final class AppViewModel: ObservableObject {
             // We'll just write the JSON sidecar.
 
             // Move the audiobook to the chosen save location (with selected extension)
-            let finalURL = try moveAudiobookToSaveLocation(from: m4aURL)
+            let finalURL = try await MainActor.run { try self.moveAudiobookToSaveLocation(from: m4aURL) }
 
             // Write chapters.json sidecar file
             let chaptersMetadata = mutableChapters.map { chapter in
@@ -951,4 +966,6 @@ extension UTType {
 }
 
 // MARK: - Book and Chapter Models are defined in Models.swift
+
+
 
