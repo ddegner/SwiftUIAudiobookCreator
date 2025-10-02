@@ -20,12 +20,18 @@
 	<string>1</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>15.0</string>
+	<key>MinimumOSVersion</key>
+	<string>18.0</string>
 	<key>NSHumanReadableCopyright</key>
 	<string></string>
 	<key>NSMainNibFile</key>
 	<string></string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>arm64</string>
+	</array>
 	<key>NSSupportsAutomaticGraphicsSwitching</key>
 	<true/>
 	<key>UTExportedTypeDeclarations</key>

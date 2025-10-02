@@ -1,7 +1,7 @@
 import SwiftUI
 import Combine
 import UniformTypeIdentifiers
-import AVFoundation
+@preconcurrency import AVFoundation
 #if os(macOS)
 import AppKit
 #endif
@@ -44,7 +44,7 @@ struct ContentView: View {
             .padding()
             .overlay(alignment: .topTrailing) {
                 Toggle("Debug Log", isOn: $vm.showDebugLog)
-                    .toggleStyle(.checkbox)
+                    .toggleStyle(.switch)
                     .padding(.top, 6)
                     .padding(.trailing, 10)
             }
@@ -286,6 +286,15 @@ struct OutputSettingsCardView: View {
                 .labelsHidden()
                 .frame(maxWidth: 160)
             }
+            FieldRow("Parallelism") {
+                let cpu = ProcessInfo.processInfo.processorCount
+                let upper = max(1, min(cpu, 8))
+                Stepper(value: $vm.maxParallelWorkers, in: 1...upper) {
+                    Text("\(vm.maxParallelWorkers) \(vm.maxParallelWorkers == 1 ? "Worker" : "Workers")")
+                }
+                .frame(maxWidth: 240)
+                .help("Limits how many chapters synthesize in parallel. Higher can be faster but uses more CPU and memory.")
+            }
 
             // Primary CTA
             HStack(spacing: 12) {
@@ -337,6 +346,29 @@ struct OutputSettingsCardView: View {
                 #else
                 ShareLink(item: url) { Text("Export Audiobook") }
                 #endif
+            }
+
+            if let sessionFolder = vm.currentSessionFolder {
+                HStack(spacing: 8) {
+                    Text("Chapter files available in:")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text(sessionFolder.lastPathComponent)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    #if os(macOS)
+                    Button("Show Chapter Files") {
+                        NSWorkspace.shared.selectFile(sessionFolder.path, inFileViewerRootedAtPath: "")
+                    }
+                    .buttonStyle(.bordered)
+                    #endif
+                    Button("Clean Up") {
+                        vm.cleanupSessionFolder()
+                    }
+                    .buttonStyle(.bordered)
+                    .foregroundStyle(.red)
+                }
+                .padding(.top, 4)
             }
 
             if let error = vm.errorMessage {
@@ -453,6 +485,33 @@ final class AudioPreviewer {
     }
 }
 
+// MARK: - Concurrency Utilities
+actor AsyncSemaphore {
+    private var value: Int
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+
+    init(value: Int) { self.value = value }
+
+    func acquire() async {
+        if value > 0 {
+            value -= 1
+            return
+        }
+        await withCheckedContinuation { cont in
+            waiters.append(cont)
+        }
+    }
+
+    func release() {
+        if let cont = waiters.first {
+            waiters.removeFirst()
+            cont.resume()
+        } else {
+            value += 1
+        }
+    }
+}
+
 // MARK: - ViewModel & helpers
 
 @MainActor
@@ -472,8 +531,14 @@ final class AppViewModel: ObservableObject {
     @Published var outputFormat: OutputFormat = .m4a
     @Published var showDebugLog: Bool = false
     @Published var isPreviewing: Bool = false
+    @Published var maxParallelWorkers: Int = 2 {
+        didSet {
+            UserDefaults.standard.set(maxParallelWorkers, forKey: "maxParallelWorkers")
+        }
+    }
 
     @Published var bookFileURL: URL?
+    @Published var currentSessionFolder: URL?
 
     let samplePreviewText: String = "This is a short preview of the selected voice."
 
@@ -489,6 +554,11 @@ final class AppViewModel: ObservableObject {
     init() {
         self.modelURL = Bundle.main.url(forResource: "kokoro-v1_0", withExtension: "safetensors")
         self.setupDefaultSaveLocation()
+
+        // Load persisted parallelism setting (default to 2 if not set) and clamp to [1, CPU cores]
+        let storedWorkers = (UserDefaults.standard.object(forKey: "maxParallelWorkers") as? Int) ?? 2
+        let cpuCores = ProcessInfo.processInfo.processorCount
+        self.maxParallelWorkers = max(1, min(cpuCores, storedWorkers))
     }
 
     private func setupDefaultSaveLocation() {
@@ -527,6 +597,22 @@ final class AppViewModel: ObservableObject {
         #endif
     }
 
+    private func createConversionSessionFolder(uniqueID: String) throws -> URL {
+        guard let saveLocation = audiobookSaveLocation else {
+            throw NSError(domain: "Save", code: -1, userInfo: [NSLocalizedDescriptionKey: "No save location configured"])
+        }
+
+        // Create the save location directory if it doesn't exist
+        try FileManager.default.createDirectory(at: saveLocation, withIntermediateDirectories: true, attributes: nil)
+
+        // Create a subfolder for this conversion session
+        let sessionFolder = saveLocation.appendingPathComponent("conversion_\(uniqueID)")
+        try FileManager.default.createDirectory(at: sessionFolder, withIntermediateDirectories: true, attributes: nil)
+        
+        log("Created conversion session folder: \(sessionFolder.path)", level: .info)
+        return sessionFolder
+    }
+
     private func moveAudiobookToSaveLocation(from tempURL: URL) throws -> URL {
         guard let saveLocation = audiobookSaveLocation else {
             throw NSError(domain: "Save", code: -1, userInfo: [NSLocalizedDescriptionKey: "No save location configured"])
@@ -553,10 +639,14 @@ final class AppViewModel: ObservableObject {
         }
 
         // Move the file from temp to final location
-        try FileManager.default.moveItem(at: tempURL, to: finalPath)
-
-        log("Audiobook saved to: \(finalPath.path)", level: .success)
-        return finalPath
+        do {
+            try FileManager.default.moveItem(at: tempURL, to: finalPath)
+            log("Audiobook saved to: \(finalPath.path)", level: .success)
+            return finalPath
+        } catch {
+            log("Failed to move audiobook from \(tempURL.path) to \(finalPath.path): \(error.localizedDescription)", level: .error)
+            throw error
+        }
     }
 
     // MARK: - Audio format helpers
@@ -631,6 +721,19 @@ final class AppViewModel: ObservableObject {
         synthesisTask = nil
         isCancelled = false
         bookFileURL = nil
+        currentSessionFolder = nil
+    }
+
+    func cleanupSessionFolder() {
+        guard let sessionFolder = currentSessionFolder else { return }
+        do {
+            try FileManager.default.removeItem(at: sessionFolder)
+            currentSessionFolder = nil
+            log("Cleaned up session folder: \(sessionFolder.path)", level: .info)
+        } catch {
+            log("Failed to clean up session folder: \(error.localizedDescription)", level: .error)
+            errorMessage = "Failed to clean up session folder: \(error.localizedDescription)"
+        }
     }
 
     func cancelSynthesis() {
@@ -682,11 +785,15 @@ final class AppViewModel: ObservableObject {
         }
 
         // Wait for the task to complete
-        await synthesisTask?.value
+        if let task = synthesisTask {
+            await task.value
+        }
     }
 
     nonisolated(nonsending) private func performConversion(book: Book, modelURL: URL) async {
-        // Update UI state on main thread
+        let startTime = Date()
+        let totalCharacters = book.chapters.reduce(0) { $0 + $1.htmlContent.count }
+
         await MainActor.run {
             isSynthesizing = true
             progress = 0
@@ -694,137 +801,201 @@ final class AppViewModel: ObservableObject {
             outputURL = nil
             errorMessage = nil
             log("Starting audiobook conversion...")
+            log("Processing \(book.chapters.count) chapters (\(totalCharacters) characters)")
         }
 
-        do {
-            // Prepare TTS on background thread
-            let tts = TTSService(modelURL: modelURL)
-            tts.limitHits = 0
+        // Create unique ID for this conversion session
+        let uniqueID = UUID().uuidString
+        var sessionFolder: URL?
 
+        do {
             let selectedVoice = await MainActor.run { self.voiceSelection.kokoroVoice }
 
-            var buffers: [AVAudioPCMBuffer] = []
-            var mutableChapters = book.chapters  // we'll update startTime
-            var cumulativeDuration: TimeInterval = 0
-            var targetFormat: AVAudioFormat? = nil
-            let totalChapters = mutableChapters.count
-
-            for (idx, chapter) in mutableChapters.enumerated() {
-                // Check for cancellation before each chapter
-                if await MainActor.run { self.isCancelled } {
-                    throw CancellationError()
-                }
-
-                await MainActor.run {
-                    currentStatus = "Synthesizing chapter \(idx + 1) of \(totalChapters)..."
-                    log("Synthesizing chapter \(idx + 1)/\(totalChapters) (\(chapter.htmlContent.count) characters)")
-                }
-
-                let chapterBuffers = try tts.synthesizeWithFallback(chapter.htmlContent, voice: selectedVoice)
-                guard !chapterBuffers.isEmpty else {
-                    throw NSError(domain: "TTS", code: -5, userInfo: [NSLocalizedDescriptionKey: "No audio produced for chapter \(idx+1)"])
-                }
-
-                if targetFormat == nil {
-                    targetFormat = chapterBuffers[0].format
-                }
-
-                // Convert buffers to target format if needed (no MainActor hop to avoid sending non-Sendable buffers)
-                var convertedBuffers: [AVAudioPCMBuffer] = []
-                for var buffer in chapterBuffers {
-                    if let targetFormat = targetFormat, !self.formatsMatch(buffer.format, targetFormat) {
-                        do {
-                            buffer = try self.convert(buffer, to: targetFormat)
-                        } catch {
-                            // If conversion fails, use original buffer
-                            print("Buffer conversion failed: \(error)")
-                        }
-                    }
-                    convertedBuffers.append(buffer)
-                }
-
-                buffers.append(contentsOf: convertedBuffers)
-
-                // Calculate chapter start time
-                mutableChapters[idx].startTime = cumulativeDuration
-
-                // Accumulate duration for chapter
-                for buffer in chapterBuffers {
-                    cumulativeDuration += self.duration(of: buffer)
-                }
-
-                await MainActor.run {
-                    self.progress = Double(idx + 1) / Double(totalChapters)
-                }
+            // Create a subfolder in the output directory for this conversion session
+            sessionFolder = try await MainActor.run {
+                try self.createConversionSessionFolder(uniqueID: uniqueID)
+            }
+            guard let sessionFolder = sessionFolder else {
+                throw NSError(domain: "Session", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to create conversion session folder"])
             }
 
-            guard let targetFormat else {
+            let totalChapters = book.chapters.count
+            var mutableChapters = book.chapters  // we'll update startTime
+            var cumulativeDuration: TimeInterval = 0
+
+            let userCap = await MainActor.run { self.maxParallelWorkers }
+            let cpu = ProcessInfo.processInfo.processorCount
+            let maxConcurrency = max(1, min(cpu, totalChapters, userCap))
+            await MainActor.run {
+                log("Using \(maxConcurrency) parallel workers (user cap: \(userCap), CPU: \(cpu))")
+                log("Available CPU cores: \(ProcessInfo.processInfo.processorCount)")
+                log("Active processor count: \(ProcessInfo.processInfo.activeProcessorCount)")
+            }
+            let gate = AsyncSemaphore(value: maxConcurrency)
+
+            struct ChapterResult {
+                let index: Int
+                let fileURL: URL
+                let duration: TimeInterval
+                let limitHits: Int
+            }
+
+            // Synthesize each chapter with bounded concurrency, writing to per-chapter temp WAV files
+            let chapterResults = try await withThrowingTaskGroup(of: ChapterResult.self) { group in
+                for (idx, chapter) in book.chapters.enumerated() {
+                    await gate.acquire()
+                    group.addTask {
+                        defer { Task { await gate.release() } }
+                        try Task.checkCancellation()
+
+                        // Create a separate TTS instance per task
+                        let tts = TTSService(modelURL: modelURL)
+                        tts.limitHits = 0
+
+                        await MainActor.run {
+                            self.currentStatus = "Synthesizing chapter \(idx + 1) of \(totalChapters)..."
+                            self.log("Worker: Processing chapter \(idx + 1)/\(totalChapters): '\(chapter.title)' (\(chapter.htmlContent.count) characters)")
+                        }
+
+                        let buffers = try tts.synthesizeWithFallback(chapter.htmlContent, voice: selectedVoice)
+                        guard !buffers.isEmpty else {
+                            throw NSError(domain: "TTS", code: -5, userInfo: [NSLocalizedDescriptionKey: "No audio produced for chapter \(idx + 1)"])
+                        }
+
+                        // Compute duration
+                        let duration = buffers.reduce(0.0) { $0 + self.duration(of: $1) }
+
+                        // Write to a temp WAV per chapter
+                        let tmpURL = sessionFolder.appendingPathComponent("chapter_tmp_\(String(format: "%02d", idx + 1)).wav")
+                        if let first = buffers.first {
+                            try await appendBuffersToWAV(buffers: buffers, to: tmpURL, format: first.format)
+                        }
+
+                        return ChapterResult(index: idx, fileURL: tmpURL, duration: duration, limitHits: tts.limitHits)
+                    }
+                }
+
+                var collected: [ChapterResult] = []
+                for try await r in group {
+                    collected.append(r)
+                    await MainActor.run {
+                        self.progress = Double(collected.count) / Double(totalChapters)
+                    }
+                }
+                return collected.sorted { $0.index < $1.index }
+            }
+
+            // Prepare main audiobook WAV and per-chapter named files
+            let wavURL = sessionFolder.appendingPathComponent("audiobook_\(uniqueID).wav")
+            let m4aURL = sessionFolder.appendingPathComponent("audiobook_\(uniqueID).m4a")
+
+            var mainAudioFile: AVAudioFile?
+            var targetFormat: AVAudioFormat?
+
+            // Stream each chapter temp file into the main WAV sequentially, then move temp to named file
+            for result in chapterResults {
+                try Task.checkCancellation()
+                // Stream this chapter into the main WAV in a scoped block so the file closes before moving
+                do {
+                    let inFile = try AVAudioFile(forReading: result.fileURL)
+
+                    // Initialize main file and target format from the first chapter encountered
+                    if targetFormat == nil {
+                        targetFormat = inFile.processingFormat
+                        if let targetFormat {
+                            var settings = targetFormat.settings
+                            settings[AVFormatIDKey] = kAudioFormatLinearPCM
+                            let isFloat = (targetFormat.commonFormat == .pcmFormatFloat32 || targetFormat.commonFormat == .pcmFormatFloat64)
+                            settings[AVLinearPCMIsFloatKey] = isFloat
+                            settings[AVLinearPCMBitDepthKey] = isFloat ? 32 : 16
+                            settings[AVLinearPCMIsBigEndianKey] = false
+                            settings[AVLinearPCMIsNonInterleaved] = !targetFormat.isInterleaved
+
+                            try? FileManager.default.removeItem(at: wavURL)
+                            mainAudioFile = try AVAudioFile(forWriting: wavURL, settings: settings)
+                        }
+                    }
+
+                    guard let mainFile = mainAudioFile, let tFormat = targetFormat else {
+                        throw NSError(domain: "Audio", code: -6, userInfo: [NSLocalizedDescriptionKey: "Failed to initialize main audio file"]) }
+
+                    // Read in chunks and write to main WAV, converting if needed
+                    let readFormat = inFile.processingFormat
+                    let capacity: AVAudioFrameCount = 8192
+                    while true {
+                        try Task.checkCancellation()
+                        guard let buf = AVAudioPCMBuffer(pcmFormat: readFormat, frameCapacity: capacity) else { break }
+                        try inFile.read(into: buf)
+                        if buf.frameLength == 0 { break }
+
+                        var writeBuf: AVAudioPCMBuffer = buf
+                        if !self.formatsMatch(readFormat, tFormat) {
+                            do {
+                                writeBuf = try self.convert(buf, to: tFormat)
+                            } catch {
+                                // Best-effort: fall back to original buffer
+                            }
+                        }
+                        try mainFile.write(from: writeBuf)
+                    }
+                }
+
+                // Create individual, nicely named chapter file by moving the temp file
+                let chapter = book.chapters[result.index]
+                let cleanTitle = chapter.title
+                    .replacingOccurrences(of: "/", with: "-")
+                    .replacingOccurrences(of: ":", with: "-")
+                    .replacingOccurrences(of: "\\", with: "-")
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                let chapterWavURL = sessionFolder.appendingPathComponent("chapter_\(String(format: "%02d", result.index + 1))_\(cleanTitle).wav")
+
+                // If destination exists, remove it first
+                try? FileManager.default.removeItem(at: chapterWavURL)
+                do {
+                    try FileManager.default.moveItem(at: result.fileURL, to: chapterWavURL)
+                    await MainActor.run {
+                        log("Created chapter file: \(chapterWavURL.lastPathComponent)", level: .success)
+                    }
+                } catch {
+                    await MainActor.run {
+                        log("Failed to finalize chapter file \(chapterWavURL.lastPathComponent): \(error.localizedDescription)", level: .warning)
+                    }
+                }
+
+                // Calculate and store chapter start time
+                mutableChapters[result.index].startTime = cumulativeDuration
+                cumulativeDuration += result.duration
+            }
+
+            guard targetFormat != nil else {
                 throw NSError(domain: "Audio", code: -6, userInfo: [NSLocalizedDescriptionKey: "No audio buffers synthesized"])
             }
 
-            // Capture buffer count to avoid data race
-            let bufferCount = buffers.count
+            // Close the main audio file
+            mainAudioFile = nil
 
             await MainActor.run {
-                currentStatus = "Saving audio to file..."
-                log("All chapters synthesized. Saving \(bufferCount) audio buffers...")
-            }
-
-            let tmp = FileManager.default.temporaryDirectory
-            let uniqueID = UUID().uuidString
-            let wavURL = tmp.appendingPathComponent("audiobook_\(uniqueID).wav")
-            let m4aURL = tmp.appendingPathComponent("audiobook_\(uniqueID).m4a")
-
-            try await appendBuffersToWAV(buffers: buffers, to: wavURL, format: targetFormat)
-
-            await MainActor.run {
+                log("WAV file created at: \(wavURL.path)", level: .info)
                 currentStatus = "Converting to M4A format..."
                 log("Converting WAV to M4A format...")
             }
 
             try await transcodeWAVtoM4A(wavURL: wavURL, m4aURL: m4aURL)
 
+            await MainActor.run {
+                log("M4A file created at: \(m4aURL.path)", level: .info)
+            }
+
             // Clean up the temporary WAV file after conversion
             try? FileManager.default.removeItem(at: wavURL)
 
-            // Embed metadata: title, author, artwork
-            // AVAssetExportSession does not easily support embedded chapters in M4A,
-            // so we'll create an external sidecar JSON alongside output file with chapter info
-
-            // Create metadata items
-            var metadataItems: [AVMetadataItem] = []
-
-            if let title = book.title as NSString? {
-                let item = AVMutableMetadataItem()
-                item.identifier = .commonIdentifierTitle
-                item.value = title
-                item.extendedLanguageTag = "und"
-                metadataItems.append(item)
-            }
-
-            if let author = book.author as NSString? {
-                let item = AVMutableMetadataItem()
-                item.identifier = .commonIdentifierArtist
-                item.value = author
-                item.extendedLanguageTag = "und"
-                metadataItems.append(item)
-            }
-
-            if let coverData = book.coverImageData {
-                let artworkItem = AVMutableMetadataItem()
-                artworkItem.identifier = .commonIdentifierArtwork
-                artworkItem.value = coverData as NSData
-                artworkItem.dataType = "com.apple.metadata.datatype.png"
-                metadataItems.append(artworkItem)
-            }
-
-            // Note: The metadata embedding step would normally be done via AVAssetExportSession or muting metadata on the audio file.
-            // Here, we can at least write the sidecar chapters JSON next to final file.
-            // Because we already transcoded the file, to embed metadata requires re-exporting or using third party tools.
-            // We'll just write the JSON sidecar.
-
             // Move the audiobook to the chosen save location (with selected extension)
-            let finalURL = try await MainActor.run { try self.moveAudiobookToSaveLocation(from: m4aURL) }
+            await MainActor.run {
+                log("Attempting to move M4A file from \(m4aURL.path) to save location", level: .info)
+            }
+            let finalURL = try await MainActor.run {
+                try self.moveAudiobookToSaveLocation(from: m4aURL)
+            }
 
             // Write chapters.json sidecar file
             let chaptersMetadata = mutableChapters.map { chapter in
@@ -837,15 +1008,40 @@ final class AppViewModel: ObservableObject {
             let jsonData = try JSONSerialization.data(withJSONObject: chaptersMetadata, options: [.prettyPrinted, .sortedKeys])
             try jsonData.write(to: jsonURL)
 
+            // Preserve the conversion session folder for user inspection
             await MainActor.run {
-                log("Kokoro token limit hits during conversion: \(tts.limitHits)", level: .warning)
+                self.currentSessionFolder = sessionFolder
+                log("Conversion session folder preserved: \(sessionFolder.path)", level: .info)
+                log("Individual chapter files available in: \(sessionFolder.lastPathComponent)", level: .info)
+            }
+
+            let endTime = Date()
+            let duration = endTime.timeIntervalSince(startTime)
+            let charactersPerSecond = Double(totalCharacters) / duration
+
+            // Aggregate token limit hits across tasks
+            let totalLimitHits = chapterResults.reduce(0) { $0 + $1.limitHits }
+
+            await MainActor.run {
                 log("Conversion completed successfully!", level: .success)
+                log("Total time: \(String(format: "%.1f", duration)) seconds", level: .info)
+                log("Processing speed: \(String(format: "%.0f", charactersPerSecond)) characters/second", level: .info)
+                log("Used \(maxConcurrency) parallel workers", level: .info)
+                log("Kokoro token limit hits during conversion: \(totalLimitHits)", level: .warning)
                 currentStatus = "Conversion completed"
                 self.outputURL = finalURL
                 self.progress = 1.0
             }
 
         } catch {
+            // Preserve the conversion session folder even on error for debugging
+            if let sessionFolder = sessionFolder {
+                await MainActor.run {
+                    self.currentSessionFolder = sessionFolder
+                    log("Conversion failed. Session folder preserved for debugging: \(sessionFolder.path)", level: .warning)
+                }
+            }
+
             await MainActor.run {
                 if error is CancellationError {
                     self.errorMessage = "Synthesis cancelled"
@@ -958,6 +1154,15 @@ enum OutputFormat: String, CaseIterable, Identifiable {
 extension UTType {
     static var epub: UTType {
         UTType(filenameExtension: "epub") ?? .data
+    }
+}
+
+// MARK: - Array Extension for Chunking
+extension Array {
+    func chunked(into size: Int) -> [[Element]] {
+        return stride(from: 0, to: count, by: size).map {
+            Array(self[$0..<Swift.min($0 + size, count)])
+        }
     }
 }
 

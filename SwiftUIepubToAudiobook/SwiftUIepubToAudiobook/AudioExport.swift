@@ -1,5 +1,5 @@
 import Foundation
-import AVFoundation
+@preconcurrency import AVFoundation
 
 func appendBuffersToWAV(buffers: [AVAudioPCMBuffer],
                         to wavURL: URL,
@@ -22,26 +22,12 @@ func appendBuffersToWAV(buffers: [AVAudioPCMBuffer],
     }
 }
 
-func writeBuffersToWAV(_ buffers: [AVAudioPCMBuffer], to wavURL: URL) throws {
-    try? FileManager.default.removeItem(at: wavURL)
-    guard let fmt = buffers.first?.format else { throw NSError(domain: "Audio", code: -1) }
-    var settings = fmt.settings
-    settings[AVFormatIDKey] = kAudioFormatLinearPCM
-    let isFloat = (fmt.commonFormat == .pcmFormatFloat32 || fmt.commonFormat == .pcmFormatFloat64)
-    settings[AVLinearPCMIsFloatKey] = isFloat
-    settings[AVLinearPCMBitDepthKey] = isFloat ? 32 : 16
-    settings[AVLinearPCMIsBigEndianKey] = false
-    settings[AVLinearPCMIsNonInterleaved] = !fmt.isInterleaved
-
-    let file = try AVAudioFile(forWriting: wavURL, settings: settings)
-    for b in buffers { try file.write(from: b) }
-}
 
 func transcodeWAVtoM4A(wavURL: URL, m4aURL: URL, metadata: [AVMetadataItem]? = nil) async throws {
     let asset = AVURLAsset(url: wavURL)
     try? FileManager.default.removeItem(at: m4aURL)
 
-    // Use the standard AVAssetExportSession approach with proper error handling
+    // Use AVAssetExportSession with proper async/await handling
     guard let export = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetAppleM4A) else {
         throw NSError(domain: "Export", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to create export session"])
     }

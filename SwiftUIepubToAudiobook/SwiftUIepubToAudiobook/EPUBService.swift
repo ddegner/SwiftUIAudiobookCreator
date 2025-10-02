@@ -20,11 +20,6 @@ struct ChapterRef { let title: String; let href: String }
 #if canImport(EPUBKit)
 // Real EPUBService backed by EPUBKit
 struct EPUBService {
-    // Load basic metadata and ordered chapter references using common EPUBKit properties
-    func loadEPUB(at url: URL) throws -> (title: String, author: String?, chapters: [ChapterRef]) {
-        guard let doc = EPUBDocument(url: url) else { throw EPUBServiceError.openFailed }
-        return try loadEPUB(from: doc)
-    }
 
     // Load metadata and chapters from an existing EPUBDocument (more efficient for multiple chapters)
     func loadEPUB(from document: EPUBDocument) throws -> (title: String, author: String?, chapters: [ChapterRef]) {
@@ -133,9 +128,6 @@ struct EPUBService {
 #else
 // Fallback EPUBService that allows the app to build without EPUBKit.
 struct EPUBService {
-    func loadEPUB(at url: URL) throws -> (title: String, author: String?, chapters: [ChapterRef]) {
-        throw EPUBServiceError.openFailed
-    }
 
     func htmlToPlainText(_ htmlData: Data) -> String { "" }
 

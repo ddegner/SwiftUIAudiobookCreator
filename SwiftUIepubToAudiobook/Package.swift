@@ -28,6 +28,14 @@ let package = Package(
                 .product(name: "RealModule", package: "swift-numerics"),
                 .product(name: "ComplexModule", package: "swift-numerics"),
                 .product(name: "MLX", package: "mlx-swift")
+            ],
+            swiftSettings: [
+                // Enable aggressive optimizations for release builds
+                .unsafeFlags(["-O", "-whole-module-optimization"], .when(configuration: .release)),
+                // Enable additional optimizations
+                .unsafeFlags(["-Xfrontend", "-enable-actor-data-race-checks"], .when(configuration: .debug)),
+                // Optimize for size in release
+                .unsafeFlags(["-Osize"], .when(configuration: .release))
             ]
         )
     ]
